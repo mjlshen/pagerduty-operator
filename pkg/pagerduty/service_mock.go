@@ -199,6 +199,7 @@ func (m *mockApi) setupDefaultServiceHandlers() {
 		m.mux.HandleFunc(fmt.Sprintf("/services/%s", svc.ID), func(w http.ResponseWriter, r *http.Request) {
 			switch r.Method {
 			case http.MethodGet:
+				// Get a service
 				serviceData := map[string]pd.Service{
 					"service": *svc,
 				}
@@ -213,7 +214,7 @@ func (m *mockApi) setupDefaultServiceHandlers() {
 					return
 				}
 			case http.MethodPut:
-				// Update default mock service
+				// Update a service
 				var serviceData map[string]pd.Service
 				err := json.NewDecoder(r.Body).Decode(&serviceData)
 				if err != nil {
@@ -242,6 +243,14 @@ func (m *mockApi) setupDefaultServiceHandlers() {
 				if err != nil {
 					return
 				}
+			case http.MethodDelete:
+				// Delete a service
+				if _, ok := m.State.Services[svc.ID]; !ok {
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+				delete(m.State.Services, svc.ID)
+				w.WriteHeader(http.StatusNoContent)
 			default:
 				w.WriteHeader(http.StatusMethodNotAllowed)
 			}

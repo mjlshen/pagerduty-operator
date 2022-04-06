@@ -290,12 +290,21 @@ func (c *SvcClient) createIntegration(serviceId, name, integrationType string) (
 
 // DeleteService will get a service from the PD api and delete it
 func (c *SvcClient) DeleteService(data *Data) error {
-	err := c.resolvePendingIncidents(data)
-	if err != nil {
+	// Check if the service exists first
+	if _, err := c.GetService(data); err != nil {
+		var aerr pdApi.APIError
+
+		if errors.As(err, &aerr) {
+			// If the service doesn't exist, we're done here
+			if aerr.NotFound() {
+				return nil
+			}
+		}
 		return err
 	}
 
-	err = c.waitForIncidentsToResolve(data, 10*time.Second)
+	// If it exists, it can only be deleted when all of its incidents are resolved
+	err := c.resolvePendingIncidents(data)
 	if err != nil {
 		return err
 	}
@@ -330,12 +339,9 @@ func (c *SvcClient) DisableService(data *Data) error {
 		return err
 	}
 
-	if err = c.waitForIncidentsToResolve(data, 10*time.Second); err != nil {
-		return err
-	}
-
 	if service.Status != "disabled" {
 		service.Status = "disabled"
+		// If all incidents are not resolved in time a 403 will be returned
 		if _, err = c.PdClient.UpdateService(*service); err != nil {
 			return err
 		}
@@ -422,49 +428,6 @@ func (c *SvcClient) getUnresolvedAlerts(incidentId string) ([]pdApi.IncidentAler
 		return []pdApi.IncidentAlert{}, err
 	}
 	return alerts.Alerts, err
-}
-
-// waitForIncidentsToResolve checks if all incidents have been resolved every 2 seconds,
-// waiting for a maximum of maxWait
-func (c *SvcClient) waitForIncidentsToResolve(data *Data, maxWait time.Duration) error {
-	waitStep := 2 * time.Second
-	incidents, err := c.getUnresolvedIncidents(data)
-	if err != nil {
-		return err
-	}
-
-	totalIncidents := len(incidents)
-
-	start := time.Now()
-	for _, incident := range incidents {
-		if time.Since(start) > maxWait {
-			return fmt.Errorf("timed out waiting for %d incidents to resolve, %d left: %v",
-				totalIncidents,
-				len(incidents),
-				parseIncidentNumbers(incidents),
-			)
-		}
-
-		if incident.AlertCounts.Triggered > 0 {
-			c.Delay(waitStep)
-			incidents, err = c.getUnresolvedIncidents(data)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// parseIncidentNumbers returns a slice of PagerDuty incident numbers
-func parseIncidentNumbers(incidents []pdApi.Incident) []uint {
-	var incidentNumbers []uint
-	for _, incident := range incidents {
-		incidentNumbers = append(incidentNumbers, incident.IncidentNumber)
-	}
-
-	return incidentNumbers
 }
 
 // generateServiceName checks if FedRamp is enabled. If it is, it returns

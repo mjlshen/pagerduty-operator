@@ -311,6 +311,41 @@ func TestSvcClient_CreateService(t *testing.T) {
 	}
 }
 
+func TestSvcClient_DeleteService(t *testing.T) {
+	tests := []struct {
+		name      string
+		data      *Data
+		expectErr bool
+	}{
+		{
+			name: "Service exists",
+			data: &Data{
+				ServiceID: mockServiceId,
+			},
+			expectErr: false,
+		},
+		{
+			name: "Service does not exist",
+			data: &Data{
+				ServiceID: mockServiceId2,
+			},
+			expectErr: false,
+		},
+	}
+
+	mock := defaultMockApi()
+	defer mock.cleanup()
+
+	for _, test := range tests {
+		err := mock.Client.DeleteService(test.data)
+		if test.expectErr {
+			assert.NotNil(t, err)
+		} else {
+			assert.Nil(t, err)
+		}
+	}
+}
+
 func TestSvcClient_EnableService(t *testing.T) {
 	tests := []struct {
 		name      string
