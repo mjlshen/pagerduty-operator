@@ -13,7 +13,7 @@ require (
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/hive/apis v0.0.0-20211217134024-32a93e12e129
 	github.com/openshift/operator-custom-metrics v0.3.1-0.20200901174648-463079905232
-	github.com/operator-framework/operator-sdk v0.17.2
+	github.com/operator-framework/operator-sdk v0.18.2
 	github.com/prometheus/client_golang v1.7.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
@@ -27,7 +27,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.6.2
 )
 
-// from installer
 replace (
 	github.com/Azure/go-autorest => github.com/tombuildsstuff/go-autorest v14.0.1-0.20200416184303-d4e299a3c04a+incompatible
 	github.com/Azure/go-autorest/autorest => github.com/tombuildsstuff/go-autorest/autorest v0.10.1-0.20200416184303-d4e299a3c04a
@@ -43,16 +42,10 @@ replace (
 )
 
 // needed because otherwise v12.0.0 is picked up as a more recent version
-replace k8s.io/client-go => k8s.io/client-go v0.19.0
-
-replace k8s.io/api => k8s.io/api v0.19.0
+replace k8s.io/client-go => k8s.io/client-go v0.20.0
 
 // needed because otherwise installer fetches a library-go version that requires bitbucket.com/ww/goautoneg which is dead
 // Tagged version fetches github.com/munnerz/goautoneg instead
 replace github.com/openshift/library-go => github.com/openshift/library-go v0.0.0-20200918101923-1e4c94603efe
 
-// temporary hack fix for https://github.com/kubernetes/kubernetes/issues/95300
-replace k8s.io/apiserver => github.com/staebler/apiserver v0.19.1-0.20201005174924-a3ef0d1e45df
-
-// replace zapr with version matching logr
 replace github.com/go-logr/zapr => github.com/go-logr/zapr v0.2.0
